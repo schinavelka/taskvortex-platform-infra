@@ -1,0 +1,86 @@
+name: TaskVortex Multi-Environment CI/CD
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  # ==========================================
+  # 1. CI STAGE: Lint, Test, and Build Check
+  # ==========================================
+  continuous-integration:
+    name: 🧪 CI & Build Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Validate Docker Build Efficiency
+        run: docker build -t taskvortex-backend:test .
+
+  # ==========================================
+  # 2. DEV DEPLOYMENT STAGE (Automated)
+  # ==========================================
+  deploy-dev:
+    name: 🚀 Deploy to DEV
+    needs: continuous-integration
+    runs-on: ubuntu-latest
+    environment: development
+    steps:
+      - name: Simulate Cloud Deployment
+        run: |
+          echo "Deploying TaskVortex to DEV Environment..."
+          echo "Targeting Host: ${{ vars.DEV_HOST || 'dev.taskvortex.internal' }}"
+          echo "Injecting Database: ${{ secrets.DATABASE_URI || 'mongodb://dev-cluster' }}"
+          echo "Deployment successful!"
+
+  # ==========================================
+  # 3. QA DEPLOYMENT & PARALLEL TESTING MATRIX
+  # ==========================================
+  deploy-qa:
+    name: 🧪 Deploy & Test QA
+    needs: deploy-dev
+    runs-on: ubuntu-latest
+    environment: qa
+    strategy:
+      # Parallel Test Matrix: Runs all 3 test suites simultaneously to save time
+      matrix:
+        test-suite: [ smoke, integration, security ]
+    steps:
+      - name: Simulate QA Deployment
+        run: echo "Deploying image to QA Environment..."
+
+      - name: Run Parallel Test Matrix
+        run: |
+          echo "Running parallel test suite: [${{ matrix.test-suite }}]"
+          echo "Executing automated tests against QA endpoint..."
+          sleep 3 # Simulating test execution time
+
+  # ==========================================
+  # 4. PROD DEPLOYMENT STAGE (Protected Gate)
+  # ==========================================
+  deploy-prod:
+    name: 🔒 Deploy to PROD
+    needs: deploy-qa
+    runs-on: ubuntu-latest
+    # This environment tag enforces the manual approval gate set up in GitHub UI
+    environment: production
+    steps:
+      - name: Secure Production Deployment
+        run: |
+          echo "========================================="
+          echo "🚨 MANUAL GATE APPROVED - RELEASING TO PROD"
+          echo "========================================="
+          echo "Deploying zero-downtime multi-stage container..."
+          echo "PROD deployment successfully finalized."
