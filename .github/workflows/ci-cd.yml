@@ -74,8 +74,10 @@ jobs:
     name: 🔒 Deploy to PROD
     needs: deploy-qa
     runs-on: ubuntu-latest
-    # This environment tag enforces the manual approval gate set up in GitHub UI
-    environment: production
+    # Explicitly mapping the environment with an environment URL forces registry validation
+    environment:
+      name: production
+      url: https://taskvortex.com
     steps:
       - name: Secure Production Deployment
         run: |
